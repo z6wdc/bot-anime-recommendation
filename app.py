@@ -5,7 +5,6 @@ import copy
 import json
 import pickle
 import pandas as pd
-import message_template
 
 from linebot import (
     LineBotApi, WebhookHandler
@@ -14,7 +13,7 @@ from linebot.exceptions import (
     InvalidSignatureError
 )
 from linebot.models import (
-    MessageEvent, TextMessage, TextSendMessage, FlexSendMessage
+    MessageEvent, TextMessage, TextSendMessage, StickerSendMessage
 )
 
 app = Flask(__name__)
@@ -32,11 +31,6 @@ anime['Score'] = anime['Score'].replace('Unknown', 0).astype(float)
 
 pkl_file = open('data/anime_indices.pkl', 'rb')
 indices = pickle.load(pkl_file)
-
-def search_anime(keyword):
-    query1 = anime['Japanese name'].str.contains(keyword)
-    query2 = anime['Name'].str.contains(keyword)
-    return anime[query1 | query2].head(1).index
 
 @app.route("/")
 def hello_world():
@@ -71,7 +65,7 @@ def handle_message(event):
         top_n = anime.sort_values('Score', ascending=False).head(n)
         titles = ''
         for row in enumerate(top_n['Japanese name']):
-            titles += f"{row[1]},"
+            titles += f"{row[1]}, "
 
         line_bot_api.reply_message(
             event.reply_token, [
@@ -80,23 +74,34 @@ def handle_message(event):
             ]
         )        
     else:
-        query1 = anime['Japanese name'].str.contains(text)
-        query2 = anime['Name'].str.contains(text)
+        query1 = anime['Japanese name'].str.contains(text, case=False)
+        query2 = anime['Name'].str.contains(text, case=False)
         anime_index = anime[query1 | query2].head(1).index
 
-        titles = ''
-        for i, number in enumerate(indices[anime_index][0]):
-            if i == 0:
-                target = f"「{anime.loc[number]['Japanese name']}」をご覧になったあなたへ"
-                continue
-            titles += f"{anime.loc[number]['Japanese name']},"
-
-        line_bot_api.reply_message(
-            event.reply_token, [
-                TextSendMessage(text=target),
-                TextSendMessage(text=titles)
-            ]
-        )
+        if anime_index.empty:
+            line_bot_api.reply_message(
+                event.reply_token, [
+                    TextSendMessage(text='見当たらない'),
+                    StickerSendMessage(
+                        package_id='3766985',
+                        sticker_id='52737140'
+                    )
+                ]
+            )
+        else:
+            titles = ''
+            for i, number in enumerate(indices[anime_index][0]):
+                if i == 0:
+                    target = f"「{anime.loc[number]['Japanese name']}」をご覧になったあなたへ"
+                    continue
+                titles += f"{anime.loc[number]['Japanese name']}, "
+                
+            line_bot_api.reply_message(
+                event.reply_token, [
+                    TextSendMessage(text=target),
+                    TextSendMessage(text=titles)
+                ]
+            )
 
 if __name__ == "__main__":
 #    app.run()
