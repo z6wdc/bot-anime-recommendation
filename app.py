@@ -1,5 +1,6 @@
 from flask import Flask, request, abort
 import os
+import re
 import copy
 import json
 import pickle
@@ -61,17 +62,22 @@ def callback():
 @handler.add(MessageEvent, message=TextMessage)
 def handle_message(event):
     text = event.message.text
+    result = re.match('TOP(\d+)', text, re.IGNORECASE)
 
-    if 'TOP' in text:
-        n = text.split()[-1]
-        top_n = anime.sort_values('Score', ascending=False).head(int(n))
+    if result:
+        n = int(result.group(1))
+        if n > 100:
+            n = 100
+        top_n = anime.sort_values('Score', ascending=False).head(n)
         titles = ''
         for row in enumerate(top_n['Japanese name']):
             titles += f"{row[1]},"
 
         line_bot_api.reply_message(
-            event.reply_token,
-            TextSendMessage(text=titles)
+            event.reply_token, [
+                TextSendMessage(text=f"アニメTOP{n}"),
+                TextSendMessage(text=titles)
+            ]
         )        
     else:
         query1 = anime['Japanese name'].str.contains(text)
