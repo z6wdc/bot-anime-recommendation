@@ -96,9 +96,9 @@ def handle_message(event):
             titles = ''
             for i, number in enumerate(indices[anime_index][0]):
                 if i == 0:
-                    target = f"「{anime.loc[number]['Japanese name']}」をご覧になったあなたへ"
+                    target = f"「{anime.at[number, 'Japanese name']}」をご覧になったあなたへ"
                     continue
-                titles += f"{anime.loc[number]['Japanese name']}, "
+                titles += f"{anime.at[number, 'Japanese name']}, "
                 
             line_bot_api.reply_message(
                 event.reply_token, [
