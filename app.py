@@ -16,6 +16,8 @@ from linebot.models import (
     MessageEvent, TextMessage, TextSendMessage, StickerMessage, StickerSendMessage
 )
 
+from message import create_messages
+
 app = Flask(__name__)
 
 #環境変数取得
@@ -94,16 +96,25 @@ def handle_message(event):
             )
         else:
             titles = ''
-            for i, number in enumerate(indices[anime_index][0]):
+            contents = []
+            for i, number in enumerate(indices[anime_index][0][:6]):
                 if i == 0:
                     target = f"「{anime.at[number, 'Japanese name']}」をご覧になったあなたへ"
                     continue
-                titles += f"{anime.at[number, 'Japanese name']}, "
+                message = {}
+                title = anime.at[number, 'Japanese name']
+                message['title'] = title
+                id = anime_image.at[number, 'MAL_ID']
+                message['button_uri'] = f'https://myanimelist.net/anime/{id}'
+                message['image_url'] = anime_image.at[number, 'IMAGE_URL']
+                contents.append(message)
+
+                titles += f"{title}, "
                 
             line_bot_api.reply_message(
                 event.reply_token, [
                     TextSendMessage(text=target),
-                    TextSendMessage(text=titles)
+                    FlexSendMessage(alt_text=titles, contents=create_messages(contents))
                 ]
             )
 
