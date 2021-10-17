@@ -121,7 +121,7 @@ def handle_message(event):
             line_bot_api.reply_message(
                 event.reply_token, [
                     TextSendMessage(text=target),
-                    TemplateSendMessage(alt_text=titles, template=CarouselTemplate(columns=contents))
+                    TemplateSendMessage(alt_text=titles, template=CarouselTemplate(columns=contents, image_size='contain'))
                 ]
             )
 
