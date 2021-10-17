@@ -13,10 +13,9 @@ from linebot.exceptions import (
     InvalidSignatureError
 )
 from linebot.models import (
-    MessageEvent, TextMessage, TextSendMessage, StickerMessage, StickerSendMessage
+    MessageEvent, TextMessage, TextSendMessage, StickerMessage, StickerSendMessage, 
+    TemplateSendMessage, CarouselTemplate, CarouselColumn, URIAction
 )
-
-from message import create_messages
 
 app = Flask(__name__)
 
@@ -103,20 +102,26 @@ def handle_message(event):
                 if i == 0:
                     target = f"「{anime.at[number, 'Japanese name']}」をご覧になったあなたへ"
                     continue
-                message = {}
+
                 title = anime.at[number, 'Japanese name']
-                message['title'] = title
                 id = anime_image.at[number, 'MAL_ID']
-                message['button_uri'] = f'https://myanimelist.net/anime/{id}'
-                message['image_url'] = anime_image.at[number, 'IMAGE_URL']
-                contents.append(message)
+                contents.append(CarouselColumn(
+                    thumbnail_image_url=anime_image.at[number, 'IMAGE_URL'],
+                    text=title,
+                    actions=[
+                        URIAction(
+                            label='detail',
+                            uri=f'https://myanimelist.net/anime/{id}'
+                        )
+                    ]
+                ))
 
                 titles += f"{title}, "
                 
             line_bot_api.reply_message(
                 event.reply_token, [
                     TextSendMessage(text=target),
-                    FlexSendMessage(alt_text=titles, contents=create_messages(contents))
+                    TemplateSendMessage(alt_text=titles, template=CarouselTemplate(columns=contents))
                 ]
             )
 
