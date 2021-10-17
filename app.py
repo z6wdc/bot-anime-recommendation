@@ -31,6 +31,8 @@ usecols = ['Name', 'Japanese name', 'Score']
 anime = pd.read_csv('data/anime.csv', usecols=usecols)
 anime['Score'] = anime['Score'].replace('Unknown', 0).astype(float)
 
+anime_image = pd.read_csv('data/anime_image.csv')
+
 pkl_file = open('data/anime_indices.pkl', 'rb')
 indices = pickle.load(pkl_file)
 
